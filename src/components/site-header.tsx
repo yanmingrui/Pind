@@ -7,7 +7,7 @@ type SectionId = "top" | "studio" | "templates" | "tutorial";
 
 const navigationItems: Array<{ id: Exclude<SectionId, "top">; label: string; href: string }> = [
   { id: "studio", label: "转换", href: "/#studio" },
-  { id: "templates", label: "模板", href: "/#templates" },
+  { id: "templates", label: "模板", href: "/templates" },
   { id: "tutorial", label: "教程", href: "/#tutorial" }
 ];
 

@@ -7,6 +7,16 @@ import { boardPresets, beadPalette } from "@/lib/palette";
 import { clonePattern, convertImageToPattern, createPreviewDataUrl, updatePatternCell } from "@/lib/beading";
 import type { BeadPattern, SavedPattern } from "@/lib/types";
 
+function createBlankPattern(size: number): BeadPattern {
+  return {
+    width: size,
+    height: size,
+    palette: beadPalette,
+    cells: Array(size * size).fill(0),
+    stats: { totalBeads: 0, colorCounts: {} }
+  };
+}
+
 type SaveState = {
   status: "idle" | "saving" | "saved" | "error";
   message?: string;
@@ -50,13 +60,14 @@ export function BeadStudio() {
   const [tags, setTags] = useState("portrait, warm, beginner");
   const [boardSize, setBoardSize] = useState(24);
   const [sourceImage, setSourceImage] = useState<string | null>(null);
-  const [pattern, setPattern] = useState<BeadPattern | null>(null);
+  const [pattern, setPattern] = useState<BeadPattern>(() => createBlankPattern(24));
+  const [isBlank, setIsBlank] = useState(true);
   const [selectedColor, setSelectedColor] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
 
   const sortedStats = useMemo(() => {
-    if (!pattern) {
+    if (isBlank) {
       return [] as Array<{ name: string; count: number; hex: string; id: number }>;
     }
 
@@ -73,7 +84,7 @@ export function BeadStudio() {
         };
       })
       .sort((left, right) => right.count - left.count);
-  }, [pattern]);
+  }, [pattern, isBlank]);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -105,6 +116,7 @@ export function BeadStudio() {
     try {
       const nextPattern = await convertImageToPattern(sourceImage, boardSize);
       setPattern(nextPattern);
+      setIsBlank(false);
       setSelectedColor(nextPattern.cells[0] ?? 0);
     } catch (error) {
       setSaveState({
@@ -206,7 +218,11 @@ export function BeadStudio() {
 
           <label className="field">
             <span>板子尺寸</span>
-            <select value={boardSize} onChange={(event) => setBoardSize(Number.parseInt(event.target.value, 10))}>
+            <select value={boardSize} onChange={(event) => {
+              const s = Number.parseInt(event.target.value, 10);
+              setBoardSize(s);
+              if (isBlank) setPattern(createBlankPattern(s));
+            }}>
               {boardPresets.map((preset) => (
                 <option key={preset} value={preset}>
                   {preset} x {preset}
@@ -241,51 +257,41 @@ export function BeadStudio() {
         </div>
 
         <div className="panel canvas-panel">
-          {pattern ? (
-            <>
-              <div className="canvas-toolbar">
-                <div>
-                  <p className="small-label">当前尺寸</p>
-                  <strong>
-                    {pattern.width} x {pattern.height}
-                  </strong>
-                </div>
-                <div>
-                  <p className="small-label">总颗数</p>
-                  <strong>{pattern.stats.totalBeads}</strong>
-                </div>
-                <div>
-                  <p className="small-label">建议底板</p>
-                  <strong>{Math.ceil(pattern.width / 29)} x {Math.ceil(pattern.height / 29)}</strong>
-                </div>
-              </div>
-
-              <PatternCanvas activeColor={selectedColor} onPaint={handlePaint} pattern={pattern} />
-
-              <div className="palette-row">
-                {beadPalette.map((color) => (
-                  <button
-                    key={color.id}
-                    className={selectedColor === color.id ? "palette-chip palette-chip-active" : "palette-chip"}
-                    onClick={() => setSelectedColor(color.id)}
-                    style={{ backgroundColor: color.hex }}
-                    title={color.name}
-                    type="button"
-                  >
-                    <span>{color.name}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="empty-canvas">
-              <p className="eyebrow">Waiting For Source</p>
-              <h3>先传图，再点“生成拼豆方案”</h3>
-              <p>
-                算法会把原图缩放到目标板子尺寸，再映射到固定拼豆色卡。生成后的每一格都可以继续手修。
-              </p>
+          <div className="canvas-toolbar">
+            <div>
+              <p className="small-label">当前尺寸</p>
+              <strong>{pattern.width} x {pattern.height}</strong>
             </div>
+            <div>
+              <p className="small-label">总颗数</p>
+              <strong>{isBlank ? "—" : pattern.stats.totalBeads}</strong>
+            </div>
+            <div>
+              <p className="small-label">建议底板</p>
+              <strong>{isBlank ? "—" : `${Math.ceil(pattern.width / 29)} x ${Math.ceil(pattern.height / 29)}`}</strong>
+            </div>
+          </div>
+
+          {isBlank && (
+            <p className="canvas-hint">上传图片后点“生成拼豆方案”，空白格会自动填充。</p>
           )}
+
+          <PatternCanvas activeColor={selectedColor} onPaint={handlePaint} pattern={pattern} />
+
+          <div className="palette-row">
+            {beadPalette.map((color) => (
+              <button
+                key={color.id}
+                className={selectedColor === color.id ? "palette-chip palette-chip-active" : "palette-chip"}
+                onClick={() => setSelectedColor(color.id)}
+                style={{ backgroundColor: color.hex }}
+                title={color.name}
+                type="button"
+              >
+                <span>{color.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="panel stats-panel">
