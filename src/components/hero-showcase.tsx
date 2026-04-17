@@ -33,30 +33,23 @@ export function HeroShowcase({ activeStage }: { activeStage: HeroStageId }) {
 				<article className="hero-preview-card hero-preview-card-source">
 					<span className="hero-preview-badge">原图</span>
 					<Image alt="Original artwork sample" className="hero-preview-image" height={640} src={originalArtwork} unoptimized width={640} />
-					<div className="hero-stage-overlay hero-stage-overlay-upload">
-						<span className="hero-overlay-chip">Source Ready</span>
-						<p>原图区域被点亮，表示当前先确认输入图片是否适合转换。</p>
+					<div className="hero-stage-icon hero-stage-icon-upload" aria-hidden="true">
+						<span>↑</span>
 					</div>
 				</article>
 
 				<div className="hero-preview-arrow" aria-hidden="true">
 					<span>→</span>
-					<div className="hero-stage-overlay hero-stage-overlay-quantize">
-						<span className="hero-overlay-chip">Palette Map</span>
-						<p>这里强调颜色压缩和网格映射，是自动生成草稿的核心步骤。</p>
-					</div>
 				</div>
 
 				<article className="hero-preview-card hero-preview-card-bead">
 					<span className="hero-preview-badge">拼豆风格</span>
 					<Image alt="Bead art style sample" className="hero-preview-image" height={576} src={beadArtwork} unoptimized width={576} />
-					<div className="hero-stage-overlay hero-stage-overlay-edit">
-						<span className="hero-overlay-chip">Edit Grid</span>
-						<p>进入修图阶段后，重点从整体像不像，切到单格能不能继续修细节。</p>
+					<div className="hero-stage-icon hero-stage-icon-edit" aria-hidden="true">
+						<span>🖌️</span>
 					</div>
-					<div className="hero-stage-overlay hero-stage-overlay-share">
-						<span className="hero-overlay-chip">Share Ready</span>
-						<p>最后把结果包装成可浏览模板，方便继续保存、展示和复用。</p>
+					<div className="hero-stage-icon hero-stage-icon-share" aria-hidden="true">
+						<span>❤️</span>
 					</div>
 				</article>
 			</div>
