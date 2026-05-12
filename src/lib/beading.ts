@@ -1,5 +1,5 @@
-import { beadPalette, hexToRgb } from "@/lib/palette";
-import type { BeadPattern } from "@/lib/types";
+import { getColorByCode, getDefaultColorCode } from "@/lib/palette";
+import type { BeadPattern, PaletteColor } from "@/lib/types";
 
 type Rgb = {
   r: number;
@@ -7,20 +7,32 @@ type Rgb = {
   b: number;
 };
 
-const paletteRgb = beadPalette.map((color) => ({
-  id: color.id,
-  rgb: hexToRgb(color.hex)
-}));
+function buildPaletteRgb(palette: PaletteColor[]) {
+  return palette.map((color) => ({
+    code: color.code,
+    rgb: {
+      r: color.rgb[0],
+      g: color.rgb[1],
+      b: color.rgb[2]
+    }
+  }));
+}
 
 function distance(a: Rgb, b: Rgb) {
   return Math.sqrt((a.r - b.r) ** 2 + (a.g - b.g) ** 2 + (a.b - b.b) ** 2);
 }
 
-function findNearestColor(rgb: Rgb) {
-  let current = paletteRgb[0];
+function findNearestColor(rgb: Rgb, paletteRgb: ReturnType<typeof buildPaletteRgb>) {
+  const [firstColor, ...rest] = paletteRgb;
+
+  if (!firstColor) {
+    throw new Error("Palette is empty.");
+  }
+
+  let current = firstColor;
   let currentDistance = distance(rgb, current.rgb);
 
-  for (const paletteEntry of paletteRgb.slice(1)) {
+  for (const paletteEntry of rest) {
     const nextDistance = distance(rgb, paletteEntry.rgb);
 
     if (nextDistance < currentDistance) {
@@ -29,11 +41,11 @@ function findNearestColor(rgb: Rgb) {
     }
   }
 
-  return current.id;
+  return current.code;
 }
 
-export function calculateStats(cells: number[]) {
-  const colorCounts: Record<number, number> = {};
+export function calculateStats(cells: string[]) {
+  const colorCounts: Record<string, number> = {};
 
   for (const cell of cells) {
     colorCounts[cell] = (colorCounts[cell] ?? 0) + 1;
@@ -45,10 +57,17 @@ export function calculateStats(cells: number[]) {
   };
 }
 
-export async function convertImageToPattern(sourceImage: string, boardSize: number): Promise<BeadPattern> {
+export async function convertImageToPattern(
+  sourceImage: string,
+  boardSize: number,
+  palette: PaletteColor[],
+  palettePresetId: string
+): Promise<BeadPattern> {
   const image = new Image();
   image.src = sourceImage;
   await image.decode();
+
+  const paletteRgb = buildPaletteRgb(palette);
 
   const canvas = document.createElement("canvas");
   canvas.width = boardSize;
@@ -69,12 +88,12 @@ export async function convertImageToPattern(sourceImage: string, boardSize: numb
   const offsetX = (boardSize - drawWidth) / 2;
   const offsetY = (boardSize - drawHeight) / 2;
 
-  context.fillStyle = "#f5f1e8";
+  context.fillStyle = getColorByCode(getDefaultColorCode(palette))?.hex ?? "#ffffff";
   context.fillRect(0, 0, boardSize, boardSize);
   context.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
 
   const imageData = context.getImageData(0, 0, boardSize, boardSize).data;
-  const cells: number[] = [];
+  const cells: string[] = [];
 
   for (let index = 0; index < imageData.length; index += 4) {
     cells.push(
@@ -82,16 +101,47 @@ export async function convertImageToPattern(sourceImage: string, boardSize: numb
         r: imageData[index] ?? 0,
         g: imageData[index + 1] ?? 0,
         b: imageData[index + 2] ?? 0
-      })
+      }, paletteRgb)
     );
   }
 
   return {
     width: boardSize,
     height: boardSize,
-    palette: beadPalette,
+    palette,
+    palettePresetId,
     cells,
     sourceImage,
+    stats: calculateStats(cells)
+  };
+}
+
+export function remapPatternToPalette(pattern: BeadPattern, palette: PaletteColor[], palettePresetId: string): BeadPattern {
+  const paletteRgb = buildPaletteRgb(palette);
+  const colorLookup = new Map(pattern.palette.map((color) => [color.code, color]));
+  const fallbackCode = getDefaultColorCode(palette);
+  const cells = pattern.cells.map((colorCode) => {
+    const sourceColor = colorLookup.get(colorCode) ?? getColorByCode(colorCode);
+
+    if (!sourceColor) {
+      return fallbackCode;
+    }
+
+    return findNearestColor(
+      {
+        r: sourceColor.rgb[0],
+        g: sourceColor.rgb[1],
+        b: sourceColor.rgb[2]
+      },
+      paletteRgb
+    );
+  });
+
+  return {
+    ...pattern,
+    palette,
+    palettePresetId,
+    cells,
     stats: calculateStats(cells)
   };
 }
@@ -104,9 +154,9 @@ export function clonePattern(pattern: BeadPattern): BeadPattern {
   };
 }
 
-export function updatePatternCell(pattern: BeadPattern, cellIndex: number, colorId: number): BeadPattern {
+export function updatePatternCell(pattern: BeadPattern, cellIndex: number, colorCode: string): BeadPattern {
   const nextCells = [...pattern.cells];
-  nextCells[cellIndex] = colorId;
+  nextCells[cellIndex] = colorCode;
 
   return {
     ...pattern,
@@ -125,11 +175,13 @@ export function createPreviewDataUrl(pattern: BeadPattern, scale = 8) {
     return "";
   }
 
+  const paletteLookup = new Map(pattern.palette.map((color) => [color.code, color]));
+
   for (let row = 0; row < pattern.height; row += 1) {
     for (let column = 0; column < pattern.width; column += 1) {
       const cellIndex = row * pattern.width + column;
-      const colorId = pattern.cells[cellIndex] ?? 0;
-      const color = pattern.palette[colorId]?.hex ?? "#000000";
+      const colorCode = pattern.cells[cellIndex] ?? getDefaultColorCode(pattern.palette);
+      const color = paletteLookup.get(colorCode)?.hex ?? "#000000";
 
       context.fillStyle = color;
       context.fillRect(column * scale, row * scale, scale, scale);

@@ -1,19 +1,29 @@
 export type PaletteColor = {
-  id: number;
+  code: string;
+  series: string;
   name: string;
+  nameZh: string;
   hex: string;
+  rgb: [number, number, number];
+};
+
+export type PalettePreset = {
+  id: string;
+  label: string;
+  codes: string[];
 };
 
 export type PatternStats = {
   totalBeads: number;
-  colorCounts: Record<number, number>;
+  colorCounts: Record<string, number>;
 };
 
 export type BeadPattern = {
   width: number;
   height: number;
   palette: PaletteColor[];
-  cells: number[];
+  palettePresetId: string;
+  cells: string[];
   sourceImage?: string;
   stats: PatternStats;
 };

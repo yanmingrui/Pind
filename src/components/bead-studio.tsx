@@ -2,17 +2,29 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
-import { boardPresets, beadPalette } from "@/lib/palette";
-import { clonePattern, convertImageToPattern, createPreviewDataUrl, updatePatternCell } from "@/lib/beading";
+import {
+  boardPresets,
+  defaultPalettePresetId,
+  getDefaultColorCode,
+  getPaletteForPreset,
+  getPalettePresetById,
+  palettePresets
+} from "@/lib/palette";
+import { clonePattern, convertImageToPattern, createPreviewDataUrl, remapPatternToPalette, updatePatternCell } from "@/lib/beading";
 import type { BeadPattern, SavedPattern } from "@/lib/types";
 
-function createBlankPattern(size: number): BeadPattern {
+function createBlankPattern(size: number, palettePresetId: string): BeadPattern {
+  const palette = getPaletteForPreset(palettePresetId);
+  const blankColor = getDefaultColorCode(palette);
+
   return {
     width: size,
     height: size,
-    palette: beadPalette,
-    cells: Array(size * size).fill(0),
+    palette,
+    palettePresetId,
+    cells: Array(size * size).fill(blankColor),
     stats: { totalBeads: 0, colorCounts: {} }
   };
 }
@@ -22,8 +34,9 @@ type SaveState = {
   message?: string;
 };
 
-function PatternCanvas({ pattern, activeColor, onPaint }: { pattern: BeadPattern; activeColor: number; onPaint: (index: number) => void }) {
+function PatternCanvas({ pattern, activeColor, onPaint }: { pattern: BeadPattern; activeColor: string; onPaint: (index: number) => void }) {
   const cellSize = pattern.width <= 24 ? 20 : pattern.width <= 32 ? 16 : 11;
+  const paletteLookup = useMemo(() => new Map(pattern.palette.map((color) => [color.code, color])), [pattern.palette]);
 
   return (
     <div className="studio-grid-shell">
@@ -34,13 +47,13 @@ function PatternCanvas({ pattern, activeColor, onPaint }: { pattern: BeadPattern
           gridTemplateRows: `repeat(${pattern.height}, ${cellSize}px)`
         }}
       >
-        {pattern.cells.map((colorId, index) => {
-          const color = pattern.palette[colorId]?.hex ?? "#000000";
-          const isSelected = colorId === activeColor;
+        {pattern.cells.map((colorCode, index) => {
+          const color = paletteLookup.get(colorCode)?.hex ?? "#000000";
+          const isSelected = colorCode === activeColor;
 
           return (
             <button
-              key={`${index}-${colorId}`}
+              key={`${index}-${colorCode}`}
               aria-label={`Cell ${index + 1}`}
               className={isSelected ? "cell-button cell-button-selected" : "cell-button"}
               onClick={() => onPaint(index)}
@@ -55,35 +68,34 @@ function PatternCanvas({ pattern, activeColor, onPaint }: { pattern: BeadPattern
 }
 
 export function BeadStudio() {
+  const t = useTranslations("BeadStudio");
+  const [vendorId, setVendorId] = useState("artkal");
   const [title, setTitle] = useState("Sunset postcard");
-  const [description, setDescription] = useState("把照片先压成拼豆草稿，再手工修掉噪点和脏色。");
+  const [description, setDescription] = useState("");
   const [tags, setTags] = useState("portrait, warm, beginner");
   const [boardSize, setBoardSize] = useState(24);
+  const [palettePresetId, setPalettePresetId] = useState(defaultPalettePresetId);
   const [sourceImage, setSourceImage] = useState<string | null>(null);
-  const [pattern, setPattern] = useState<BeadPattern>(() => createBlankPattern(24));
+  const [pattern, setPattern] = useState<BeadPattern>(() => createBlankPattern(24, defaultPalettePresetId));
   const [isBlank, setIsBlank] = useState(true);
-  const [selectedColor, setSelectedColor] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(() => getDefaultColorCode(getPaletteForPreset(defaultPalettePresetId)));
   const [isGenerating, setIsGenerating] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
+  const currentPalette = useMemo(() => getPaletteForPreset(palettePresetId), [palettePresetId]);
+  const activePreset = useMemo(() => getPalettePresetById(palettePresetId), [palettePresetId]);
+  const vendorOptions = useMemo(() => [{ id: "artkal", label: "Artkal" }], []);
 
-  const sortedStats = useMemo(() => {
+  const usedColorStats = useMemo(() => {
     if (isBlank) {
-      return [] as Array<{ name: string; count: number; hex: string; id: number }>;
+      return [] as Array<{ code: string; count: number }>;
     }
 
-    return Object.entries(pattern.stats.colorCounts)
-      .map(([key, value]) => {
-        const id = Number.parseInt(key, 10);
-        const color = pattern.palette[id];
-
-        return {
-          id,
-          name: color?.name ?? `Color ${id}`,
-          hex: color?.hex ?? "#000000",
-          count: value,
-        };
-      })
-      .sort((left, right) => right.count - left.count);
+    return pattern.palette
+      .map((color) => ({
+        code: color.code,
+        count: pattern.stats.colorCounts[color.code] ?? 0
+      }))
+      .filter((entry) => entry.count > 0);
   }, [pattern, isBlank]);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -106,7 +118,7 @@ export function BeadStudio() {
 
   async function handleGenerate() {
     if (!sourceImage) {
-      setSaveState({ status: "error", message: "先上传一张图片，再生成拼豆方案。" });
+      setSaveState({ status: "error", message: t("messages.errNoImageUpload") });
       return;
     }
 
@@ -114,14 +126,14 @@ export function BeadStudio() {
     setSaveState({ status: "idle" });
 
     try {
-      const nextPattern = await convertImageToPattern(sourceImage, boardSize);
+      const nextPattern = await convertImageToPattern(sourceImage, boardSize, currentPalette, palettePresetId);
       setPattern(nextPattern);
       setIsBlank(false);
-      setSelectedColor(nextPattern.cells[0] ?? 0);
+      setSelectedColor(nextPattern.cells[0] ?? getDefaultColorCode(nextPattern.palette));
     } catch (error) {
       setSaveState({
         status: "error",
-        message: error instanceof Error ? error.message : "图片转换失败。"
+        message: error instanceof Error ? error.message : t("messages.errConvert")
       });
     } finally {
       setIsGenerating(false);
@@ -136,6 +148,17 @@ export function BeadStudio() {
     setPattern(updatePatternCell(pattern, index, selectedColor));
   }
 
+  function handlePalettePresetChange(nextPalettePresetId: string) {
+    const nextPalette = getPaletteForPreset(nextPalettePresetId);
+    const nextDefaultColor = getDefaultColorCode(nextPalette);
+    const nextPattern = remapPatternToPalette(pattern, nextPalette, nextPalettePresetId);
+
+    setPalettePresetId(nextPalettePresetId);
+    setPattern(isBlank ? createBlankPattern(boardSize, nextPalettePresetId) : nextPattern);
+    setSelectedColor(nextPalette.some((color) => color.code === selectedColor) ? selectedColor : nextDefaultColor);
+    setSaveState({ status: "idle" });
+  }
+
   function handleReset() {
     if (!pattern) {
       return;
@@ -147,11 +170,11 @@ export function BeadStudio() {
 
   async function handleSave() {
     if (!pattern) {
-      setSaveState({ status: "error", message: "没有可保存的作品。" });
+      setSaveState({ status: "error", message: t("messages.errNoPattern") });
       return;
     }
 
-    setSaveState({ status: "saving", message: "正在保存作品..." });
+    setSaveState({ status: "saving", message: t("messages.saving") });
 
     const payload = {
       title,
@@ -173,55 +196,53 @@ export function BeadStudio() {
     });
 
     if (!response.ok) {
-      setSaveState({ status: "error", message: "保存失败，请稍后再试。" });
+      setSaveState({ status: "error", message: t("messages.errSave") });
       return;
     }
 
     const saved = (await response.json()) as SavedPattern;
     setSaveState({
       status: "saved",
-      message: `作品已保存，可以在 /pattern/${saved.id} 查看。`
+      message: t("messages.savedMsg", { id: saved.id })
     });
   }
 
   return (
     <section className="studio-section" id="studio">
       <div className="section-heading">
-        <p className="eyebrow">Converter + Editor</p>
-        <h2>上传图片，几秒内生成可继续编辑的拼豆方案</h2>
-        <p>
-          这个 MVP 先做单图转换、网格上色和本地作品保存。后面再接评论、收藏和多人协作。
-        </p>
+        <p className="eyebrow">{t("eyebrow")}</p>
+        <h2>{t("title")}</h2>
+        <p>{t("desc")}</p>
       </div>
 
       <div className="studio-layout">
         <div className="panel control-panel">
           <label className="field">
-            <span>作品标题</span>
+            <span>{t("fields.titleLabel")}</span>
             <input value={title} onChange={(event) => setTitle(event.target.value)} />
           </label>
 
           <label className="field">
-            <span>一句描述</span>
+            <span>{t("fields.descLabel")}</span>
             <textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} />
           </label>
 
           <label className="field">
-            <span>标签</span>
-            <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="portrait, cute, beginner" />
+            <span>{t("fields.tagsLabel")}</span>
+            <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder={t("fields.tagsPlaceholder")} />
           </label>
 
           <label className="field">
-            <span>上传图片</span>
+            <span>{t("fields.uploadLabel")}</span>
             <input accept="image/*" onChange={handleFileChange} type="file" />
           </label>
 
           <label className="field">
-            <span>板子尺寸</span>
+            <span>{t("fields.boardSizeLabel")}</span>
             <select value={boardSize} onChange={(event) => {
               const s = Number.parseInt(event.target.value, 10);
               setBoardSize(s);
-              if (isBlank) setPattern(createBlankPattern(s));
+              if (isBlank) setPattern(createBlankPattern(s, palettePresetId));
             }}>
               {boardPresets.map((preset) => (
                 <option key={preset} value={preset}>
@@ -231,15 +252,27 @@ export function BeadStudio() {
             </select>
           </label>
 
+          <label className="field">
+            <span>{t("fields.palettePresetLabel")}</span>
+            <select value={palettePresetId} onChange={(event) => handlePalettePresetChange(event.target.value)}>
+              {palettePresets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.label}
+                </option>
+              ))}
+            </select>
+            <p className="muted palette-summary">{t("fields.palettePresetSummary", { label: activePreset.label, count: currentPalette.length })}</p>
+          </label>
+
           <div className="actions-row">
             <button className="primary-button" onClick={handleGenerate} type="button">
-              {isGenerating ? "生成中..." : "生成拼豆方案"}
+              {isGenerating ? t("actions.generating") : t("actions.generate")}
             </button>
             <button className="ghost-button" onClick={handleSave} type="button">
-              保存作品
+              {t("actions.save")}
             </button>
             <button className="ghost-button" onClick={handleReset} type="button">
-              刷新统计
+              {t("actions.refresh")}
             </button>
           </div>
 
@@ -247,72 +280,75 @@ export function BeadStudio() {
             {sourceImage ? (
               <Image alt="Uploaded source" height={640} src={sourceImage} unoptimized width={640} />
             ) : (
-              <p>上传后会在这里显示原图。</p>
+              <p>{t("messages.noImage")}</p>
             )}
           </div>
 
           <div className="status-line" data-status={saveState.status}>
-            {saveState.message ?? "生成后可直接在右侧网格上手工修图。"}
+            {saveState.message ?? t("messages.defaultHint")}
           </div>
         </div>
 
         <div className="panel canvas-panel">
           <div className="canvas-toolbar">
             <div>
-              <p className="small-label">当前尺寸</p>
+              <p className="small-label">{t("canvas.size")}</p>
               <strong>{pattern.width} x {pattern.height}</strong>
             </div>
             <div>
-              <p className="small-label">总颗数</p>
+              <p className="small-label">{t("canvas.total")}</p>
               <strong>{isBlank ? "—" : pattern.stats.totalBeads}</strong>
             </div>
             <div>
-              <p className="small-label">建议底板</p>
+              <p className="small-label">{t("canvas.board")}</p>
               <strong>{isBlank ? "—" : `${Math.ceil(pattern.width / 29)} x ${Math.ceil(pattern.height / 29)}`}</strong>
             </div>
+            <label className="toolbar-select">
+              <span className="small-label">{t("fields.paintColorLabel")}</span>
+              <select value={selectedColor} onChange={(event) => setSelectedColor(event.target.value)}>
+                {pattern.palette.map((color) => (
+                  <option key={color.code} value={color.code}>
+                    {color.code}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           {isBlank && (
-            <p className="canvas-hint">上传图片后点“生成拼豆方案”，空白格会自动填充。</p>
+            <p className="canvas-hint">{t("canvas.hint")}</p>
           )}
 
           <PatternCanvas activeColor={selectedColor} onPaint={handlePaint} pattern={pattern} />
-
-          <div className="palette-row">
-            {beadPalette.map((color) => (
-              <button
-                key={color.id}
-                className={selectedColor === color.id ? "palette-chip palette-chip-active" : "palette-chip"}
-                onClick={() => setSelectedColor(color.id)}
-                style={{ backgroundColor: color.hex }}
-                title={color.name}
-                type="button"
-              >
-                <span>{color.name}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="panel stats-panel">
           <div className="section-heading compact">
-            <p className="eyebrow">Palette Stats</p>
-            <h3>用量统计</h3>
+            <p className="eyebrow">{t("stats.eyebrow")}</p>
+            <h3>{t("stats.title")}</h3>
           </div>
 
+          <label className="field stats-vendor-field">
+            <span>{t("stats.vendorLabel")}</span>
+            <select value={vendorId} onChange={(event) => setVendorId(event.target.value)}>
+              {vendorOptions.map((vendor) => (
+                <option key={vendor.id} value={vendor.id}>
+                  {vendor.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <div className="stats-list">
-            {sortedStats.length > 0 ? (
-              sortedStats.map((entry) => (
-                <div className="stats-item" key={entry.id}>
-                  <span className="swatch" style={{ backgroundColor: entry.hex }} />
-                  <div>
-                    <strong>{entry.name}</strong>
-                    <p>{entry.count} beads</p>
-                  </div>
+            {usedColorStats.length > 0 ? (
+              usedColorStats.map((entry) => (
+                <div className="stats-item" key={entry.code}>
+                  <strong>{entry.code}</strong>
+                  <span>{t("stats.countLabel", { count: entry.count })}</span>
                 </div>
               ))
             ) : (
-              <p className="muted">生成方案后，这里会显示每种颜色需要多少颗豆。</p>
+              <p className="muted">{t("stats.empty")}</p>
             )}
           </div>
         </div>

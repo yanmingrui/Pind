@@ -1,0 +1,157 @@
+{
+  "SiteHeader": {
+    "nav": {
+      "studio": "转换",
+      "templates": "模板",
+      "tutorial": "教程"
+    },
+    "login": "登录",
+    "cta": "开始使用"
+  },
+  "HomePage": {
+    "story": {
+      "step1": {
+        "eyebrow": "Step 1",
+        "title": "上传图片",
+        "desc": "先上传人物、宠物或插画，站点会在浏览器内做缩放和颜色映射。"
+      },
+      "step2": {
+        "eyebrow": "Step 2",
+        "title": "生成草稿",
+        "desc": "按板子尺寸压缩成固定网格，并映射到有限的拼豆色卡，生成可编辑初稿。"
+      },
+      "step3": {
+        "eyebrow": "Step 3",
+        "title": "继续手修",
+        "desc": "在每一格上改色，手工抹掉脏点，同时查看每种颜色的用量统计。"
+      }
+    },
+    "gallery": {
+      "eyebrow": "Recent Patterns",
+      "title": "最近保存的作品",
+      "desc": "这里直接读取本地 JSON 数据，方便你先把编辑器和分享链路跑通。",
+      "empty": "还没有作品。先在上面的编辑器生成并保存一个图案。"
+    },
+    "footer": {
+      "eyebrow": "Next Up",
+      "title": "下一步适合接入的能力",
+      "items": {
+        "login": "用户登录",
+        "like": "点赞收藏",
+        "storage": "云端对象存储",
+        "palette": "更多真实拼豆色卡"
+      },
+      "openLatest": "打开最近作品"
+    }
+  },
+  "HeroExperience": {
+    "eyebrow": "Workflow",
+    "title": "从上传到分享，左边选阶段，右边直接看结果变化。",
+    "desc": "把功能拆成 4 张产品卡，每一步都对应预览里的一个重点区域。",
+    "stages": {
+      "upload": {
+        "title": "Upload",
+        "summary": "拖入原图，立刻生成可转换输入。",
+        "detail": "适合人物、宠物、插画，先拿到一张干净的原始参考图。"
+      },
+      "quantize": {
+        "title": "Quantize",
+        "summary": "自动压缩成有限色卡和固定网格。",
+        "detail": "把图像关系变成拼豆能落地的草稿，不需要手工先描一遍。"
+      },
+      "edit": {
+        "title": "Edit",
+        "summary": "逐格修色，清理脏点和边缘。",
+        "detail": "在生成结果上继续微调，比从空白板子开始快得多。"
+      },
+      "share": {
+        "title": "Share",
+        "summary": "把作品整理成可浏览的模板页。",
+        "detail": "后续接账号体系和云存储后，就能直接沉淀成作品库。"
+      }
+    },
+    "upload": "上传并转换",
+    "browse": "浏览模板"
+  },
+  "HeroShowcase": {
+    "eyebrow": "Preview",
+    "title": "{stage} 阶段正在预览里同步高亮。",
+    "desc": "左边切换工作流阶段，右边会强调当前应该关注的原图、映射、修色或分享结果。",
+    "stageLabel": {
+      "upload": "Upload",
+      "quantize": "Quantize",
+      "edit": "Edit",
+      "share": "Share"
+    },
+    "badgeOriginal": "原图",
+    "badgeBead": "拼豆风格"
+  },
+  "BeadStudio": {
+    "eyebrow": "Converter + Editor",
+    "title": "上传图片，几秒内生成可继续编辑的拼豆方案",
+    "desc": "这个 MVP 先做单图转换、网格上色和本地作品保存。后面再接评论、收藏和多人协作。",
+    "fields": {
+      "titleLabel": "作品标题",
+      "descLabel": "一句描述",
+      "tagsLabel": "标签",
+      "tagsPlaceholder": "portrait, cute, beginner",
+      "uploadLabel": "上传图片",
+      "boardSizeLabel": "板子尺寸",
+      "paintColorLabel": "绘制色号",
+      "palettePresetLabel": "颜色范围",
+      "palettePresetSummary": "当前使用 {label}，共 {count} 色"
+    },
+    "actions": {
+      "generate": "生成拼豆方案",
+      "generating": "生成中...",
+      "save": "保存作品",
+      "refresh": "刷新统计"
+    },
+    "canvas": {
+      "size": "当前尺寸",
+      "total": "总颗数",
+      "board": "建议底板",
+      "hint": "上传图片后点「生成拼豆方案」，空白格会自动填充。"
+    },
+    "stats": {
+      "eyebrow": "Palette Stats",
+      "title": "用量统计",
+      "vendorLabel": "拼豆店家",
+      "countLabel": "{count} 颗",
+      "empty": "生成方案后，这里会显示每种颜色需要多少颗豆。"
+    },
+    "messages": {
+      "noImage": "上传后会在这里显示原图。",
+      "defaultHint": "生成后可直接在右侧网格上手工修图。",
+      "errNoImageUpload": "先上传一张图片，再生成拼豆方案。",
+      "errConvert": "图片转换失败。",
+      "errNoPattern": "没有可保存的作品。",
+      "errSave": "保存失败，请稍后再试。",
+      "saving": "正在保存作品...",
+      "savedMsg": "作品已保存，可以在 /pattern/{id} 查看。"
+    }
+  },
+  "PatternCard": {
+    "viewDetail": "查看详情"
+  },
+  "PatternDetail": {
+    "eyebrow": "Pattern Detail",
+    "size": "尺寸",
+    "total": "总颗数",
+    "createdAt": "创建时间",
+    "colorBreakdown": {
+      "eyebrow": "Color Breakdown",
+      "title": "颜色用量"
+    },
+    "sourceData": {
+      "eyebrow": "Source Data",
+      "title": "作品 JSON 片段"
+    }
+  },
+  "TemplatesPage": {
+    "eyebrow": "Recent Patterns",
+    "title": "最近保存的作品",
+    "desc": "这里直接读取本地 JSON 数据，方便你先把编辑器和分享链路跑通。",
+    "empty": "还没有作品。先去 <editorLink>编辑器</editorLink> 生成并保存一个图案。"
+  }
+}

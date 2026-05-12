@@ -1,19 +1,30 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
+
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 
 type SectionId = "top" | "studio" | "templates" | "tutorial";
-
-const navigationItems: Array<{ id: Exclude<SectionId, "top">; label: string; href: string }> = [
-  { id: "studio", label: "转换", href: "/#studio" },
-  { id: "templates", label: "模板", href: "/templates" },
-  { id: "tutorial", label: "教程", href: "/#tutorial" }
-];
 
 export function SiteHeader() {
   const [activeSection, setActiveSection] = useState<SectionId>("top");
   const [isScrolled, setIsScrolled] = useState(false);
+  const t = useTranslations("SiteHeader");
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const navigationItems: Array<{ id: Exclude<SectionId, "top">; label: string; href: string }> = [
+    { id: "studio", label: t("nav.studio"), href: "/#studio" },
+    { id: "templates", label: t("nav.templates"), href: "/templates" },
+    { id: "tutorial", label: t("nav.tutorial"), href: "/#tutorial" }
+  ];
+
+  function switchLocale() {
+    const nextLocale = locale === "zh" ? "en" : "zh";
+    router.replace(pathname, { locale: nextLocale });
+  }
 
   useEffect(() => {
     const updateScrollState = () => {
@@ -78,11 +89,14 @@ export function SiteHeader() {
         </nav>
 
         <div className="site-nav-actions">
+          <button className="nav-text-button" onClick={switchLocale} type="button" aria-label="Switch language">
+            {locale === "zh" ? "EN" : "中文"}
+          </button>
           <button className="nav-text-button" type="button">
-            登录
+            {t("login")}
           </button>
           <Link className="primary-button nav-cta" href="/#studio">
-            开始使用
+            {t("cta")}
           </Link>
         </div>
       </div>

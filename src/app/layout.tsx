@@ -1,32 +1,5 @@
-import type { Metadata } from "next";
-import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
-
-import { SiteHeader } from "@/components/site-header";
-import "./globals.css";
-
-const displayFont = Space_Grotesk({
-	subsets: ["latin"],
-	variable: "--font-display"
-});
-
-const monoFont = IBM_Plex_Mono({
-	weight: ["400", "500"],
-	subsets: ["latin"],
-	variable: "--font-mono"
-});
-
-export const metadata: Metadata = {
-	title: "Trajec",
-	description: "Bead pattern editor and sharing site MVP"
-};
-
+// Root layout — required by Next.js for the not-found page boundary.
+// The actual html/body/providers are in [locale]/layout.tsx.
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-	return (
-		<html lang="zh-CN">
-			<body className={`${displayFont.variable} ${monoFont.variable}`}>
-				<SiteHeader />
-				{children}
-			</body>
-		</html>
-	);
+	return children;
 }

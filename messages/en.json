@@ -1,0 +1,157 @@
+{
+  "SiteHeader": {
+    "nav": {
+      "studio": "Convert",
+      "templates": "Templates",
+      "tutorial": "Tutorial"
+    },
+    "login": "Login",
+    "cta": "Get Started"
+  },
+  "HomePage": {
+    "story": {
+      "step1": {
+        "eyebrow": "Step 1",
+        "title": "Upload an Image",
+        "desc": "Upload a portrait, pet, or illustration. The site resizes and maps colors in the browser."
+      },
+      "step2": {
+        "eyebrow": "Step 2",
+        "title": "Generate Draft",
+        "desc": "Compress to a fixed grid based on board size and map to the bead color palette to create an editable draft."
+      },
+      "step3": {
+        "eyebrow": "Step 3",
+        "title": "Fine-tune",
+        "desc": "Adjust colors cell by cell, erase noise, and check the count of each color used."
+      }
+    },
+    "gallery": {
+      "eyebrow": "Recent Patterns",
+      "title": "Recent Saved Works",
+      "desc": "Reading directly from local JSON data to get the editor and sharing pipeline running.",
+      "empty": "No works yet. Generate and save one in the editor above."
+    },
+    "footer": {
+      "eyebrow": "Next Up",
+      "title": "Features to Add Next",
+      "items": {
+        "login": "User Login",
+        "like": "Likes & Favorites",
+        "storage": "Cloud Object Storage",
+        "palette": "More Real Bead Colors"
+      },
+      "openLatest": "Open Latest Work"
+    }
+  },
+  "HeroExperience": {
+    "eyebrow": "Workflow",
+    "title": "From upload to share — pick a stage on the left, see the result change on the right.",
+    "desc": "The feature is split into 4 product cards; each step highlights a key area in the preview.",
+    "stages": {
+      "upload": {
+        "title": "Upload",
+        "summary": "Drop in the original image and get a convertible input instantly.",
+        "detail": "Works with portraits, pets, or illustrations. Start with a clean reference image."
+      },
+      "quantize": {
+        "title": "Quantize",
+        "summary": "Automatically compress to a limited palette and fixed grid.",
+        "detail": "Turns image relationships into a bead-ready draft without manual tracing."
+      },
+      "edit": {
+        "title": "Edit",
+        "summary": "Adjust colors cell by cell, clear noise and edges.",
+        "detail": "Fine-tune the generated result — much faster than starting from a blank board."
+      },
+      "share": {
+        "title": "Share",
+        "summary": "Organize your work into browsable template pages.",
+        "detail": "Once accounts and cloud storage are connected, build a lasting library of works."
+      }
+    },
+    "upload": "Upload & Convert",
+    "browse": "Browse Templates"
+  },
+  "HeroShowcase": {
+    "eyebrow": "Preview",
+    "title": "The {stage} stage is highlighted in the preview.",
+    "desc": "Switch workflow stages on the left; the right will emphasize the original, mapping, edit, or sharing result.",
+    "stageLabel": {
+      "upload": "Upload",
+      "quantize": "Quantize",
+      "edit": "Edit",
+      "share": "Share"
+    },
+    "badgeOriginal": "Original",
+    "badgeBead": "Bead Style"
+  },
+  "BeadStudio": {
+    "eyebrow": "Converter + Editor",
+    "title": "Upload an image, generate an editable bead pattern in seconds",
+    "desc": "This MVP covers single-image conversion, grid painting, and local pattern saving. Comments, favorites, and collaboration come next.",
+    "fields": {
+      "titleLabel": "Work Title",
+      "descLabel": "Short Description",
+      "tagsLabel": "Tags",
+      "tagsPlaceholder": "portrait, cute, beginner",
+      "uploadLabel": "Upload Image",
+      "boardSizeLabel": "Board Size",
+      "paintColorLabel": "Paint Code",
+      "palettePresetLabel": "Palette Range",
+      "palettePresetSummary": "Using {label} with {count} colors"
+    },
+    "actions": {
+      "generate": "Generate Bead Pattern",
+      "generating": "Generating...",
+      "save": "Save Work",
+      "refresh": "Refresh Stats"
+    },
+    "canvas": {
+      "size": "Current Size",
+      "total": "Total Beads",
+      "board": "Suggested Board",
+      "hint": "Upload an image and click \"Generate Bead Pattern\" — the blank grid will fill automatically."
+    },
+    "stats": {
+      "eyebrow": "Palette Stats",
+      "title": "Usage Stats",
+      "vendorLabel": "Vendor",
+      "countLabel": "{count} beads",
+      "empty": "After generating a pattern, the count for each color will appear here."
+    },
+    "messages": {
+      "noImage": "The original image will appear here after uploading.",
+      "defaultHint": "After generating, you can paint directly on the grid on the right.",
+      "errNoImageUpload": "Please upload an image before generating a bead pattern.",
+      "errConvert": "Image conversion failed.",
+      "errNoPattern": "No pattern to save.",
+      "errSave": "Save failed, please try again later.",
+      "saving": "Saving...",
+      "savedMsg": "Work saved! View it at /pattern/{id}."
+    }
+  },
+  "PatternCard": {
+    "viewDetail": "View Details"
+  },
+  "PatternDetail": {
+    "eyebrow": "Pattern Detail",
+    "size": "Size",
+    "total": "Total Beads",
+    "createdAt": "Created At",
+    "colorBreakdown": {
+      "eyebrow": "Color Breakdown",
+      "title": "Color Usage"
+    },
+    "sourceData": {
+      "eyebrow": "Source Data",
+      "title": "Pattern JSON Snippet"
+    }
+  },
+  "TemplatesPage": {
+    "eyebrow": "Recent Patterns",
+    "title": "Recent Saved Works",
+    "desc": "Reading directly from local JSON data to get the editor and sharing pipeline running.",
+    "empty": "No works yet. Go to the <editorLink>Editor</editorLink> to generate and save one."
+  }
+}
